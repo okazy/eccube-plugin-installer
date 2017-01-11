@@ -1,0 +1,17 @@
+{
+  "name": "ec-cube/plugin-installer",
+  "type": "composer-plugin",
+  "description": "EC-CUBE plugin installer.",
+  "license": "MIT",
+  "autoload": {
+    "psr-0": {
+      "Eccube": "src/"
+    }
+  },
+  "extra": {
+    "class": "Eccube\\Composer\\EccubePluginInstallerPlugin"
+  },
+  "require": {
+    "composer-plugin-api": "^1.0"
+  }
+}
