@@ -75,9 +75,9 @@ class PluginInstaller extends LibraryInstaller
 
     private function getApplication()
     {
-        require_once __DIR__.'/../../../../../../autoload.php';
+        $loader = require_once __DIR__.'/../../../../../../autoload.php';
 
-        $app = \Eccube\Application::getInstance();
+        $app = \Eccube\Application::getInstance(['eccube.autoloader' => $loader]);
         if (!$app->isBooted()) {
             $app->initialize();
             $app->boot();
