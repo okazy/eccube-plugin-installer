@@ -27,13 +27,14 @@ class PluginInstaller extends LibraryInstaller
         parent::install($repo, $package);
 
         $extra = $package->getExtra();
-        $app = $this->getApplication();
 
+        $app = $this->getApplication();
         $code = $extra['code'];
         $configYml = Yaml::parse(file_get_contents($app['config']['plugin_realdir'].'/'.$code.'/config.yml'));
         $eventYml = Yaml::parse(file_get_contents($app['config']['plugin_realdir'].'/'.$code.'/event.yml'));
 
-        $app['eccube.service.plugin']->registerPlugin($configYml, $eventYml, @$extra['id']);
+        $app['eccube.service.plugin']->preInstall();
+        $app['eccube.service.plugin']->postInstall($configYml, $eventYml, @$extra['id']);
     }
 
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
