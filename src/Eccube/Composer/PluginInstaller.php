@@ -63,7 +63,7 @@ class PluginInstaller extends LibraryInstaller
         $id = @$extra['id'];
         if ($id) {
             $Plugin = $app['eccube.repository.plugin']->findOneBy(array('source' => $id));
-            if ($Plugin->getEnable() !== Constant::DISABLED) {
+            if ($Plugin->isEnable()) {
                 throw new RuntimeException('プラグインを無効化してください。'.$code);
             }
             if ($Plugin) {
