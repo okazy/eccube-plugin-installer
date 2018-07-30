@@ -24,28 +24,37 @@ class PluginInstaller extends LibraryInstaller
 
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
+        $kernel = $this->getKernel();
+
         parent::install($repo, $package);
 
         $extra = $package->getExtra();
-
-        $app = $this->getApplication();
+        $container = $kernel->getContainer();
+        $eccubeConfig = $container->get('Eccube\Common\EccubeConfig');
         $code = $extra['code'];
-        $configYml = Yaml::parse(file_get_contents($app['config']['plugin_realdir'].'/'.$code.'/config.yml'));
-        $eventYml = Yaml::parse(file_get_contents($app['config']['plugin_realdir'].'/'.$code.'/event.yml'));
+        // TODO config.ymlをやめてcomposer.jsonから読む
+        $configYml = Yaml::parse(file_get_contents($eccubeConfig['plugin_realdir'].'/'.$code.'/config.yml'));
+        // TODO event.ymlをなくす
+        $eventYml = [];
 
-        $app['eccube.service.plugin']->preInstall();
-        $app['eccube.service.plugin']->postInstall($configYml, $eventYml, @$extra['id']);
+        $pluginService = $container->get('Eccube\Service\PluginService');
+        $pluginService->preInstall();
+        $pluginService->postInstall($configYml, $eventYml, @$extra['id']);
     }
 
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
-        $app = $this->getApplication();
+        $kernel = $this->getKernel();
+        $container = $kernel->getContainer();
 
         $extra = $package->getExtra();
         $code = $extra['code'];
 
+        $pluginRepository = $container->get('Eccube\Repository\PluginRepository');
+        $pluginService = $container->get('Eccube\Service\PluginService');
+
         // 他のプラグインから依存されている場合はアンインストールできない
-        $enabledPlugins = $app['eccube.repository.plugin']->findBy(array('enable' => Constant::ENABLED));
+        $enabledPlugins = $pluginRepository->findBy(['enabled' => Constant::ENABLED]);
         foreach ($enabledPlugins as $p) {
             if ($p->getCode() !== $code) {
                 $dir = 'app/Plugin/'.$p->getCode();
@@ -62,29 +71,24 @@ class PluginInstaller extends LibraryInstaller
         // 無効化していないとアンインストールできない
         $id = @$extra['id'];
         if ($id) {
-            $Plugin = $app['eccube.repository.plugin']->findOneBy(array('source' => $id));
+            $Plugin = $pluginRepository->findOneBy(['source' => $id]);
             if ($Plugin->isEnable()) {
                 throw new RuntimeException('プラグインを無効化してください。'.$code);
             }
             if ($Plugin) {
-                $app['eccube.service.plugin']->uninstall($Plugin);
+                $pluginService->uninstall($Plugin);
             }
         }
 
         parent::uninstall($repo, $package);
     }
 
-    private function getApplication()
+    private function getKernel()
     {
-        $loader = require_once __DIR__.'/../../../../../../autoload.php';
-
-        $app = \Eccube\Application::getInstance(['eccube.autoloader' => $loader]);
-        if (!$app->isBooted()) {
-            $app->initialize();
-            $app->boot();
+        if (!isset($GLOBALS['kernel'])) {
+            throw new \RuntimeException('Use `bin/console eccube:composer`');
         }
-
-        return $app;
+        return $GLOBALS['kernel'];
     }
 
 }
