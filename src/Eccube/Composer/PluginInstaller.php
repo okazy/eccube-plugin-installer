@@ -72,7 +72,7 @@ class PluginInstaller extends LibraryInstaller
         $id = @$extra['id'];
         if ($id) {
             $Plugin = $pluginRepository->findOneBy(['source' => $id]);
-            if ($Plugin->isEnable()) {
+            if ($Plugin->isEnabled()) {
                 throw new RuntimeException('プラグインを無効化してください。'.$code);
             }
             if ($Plugin) {
