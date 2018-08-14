@@ -24,7 +24,13 @@ class PluginInstaller extends LibraryInstaller
 
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
-        $kernel = $this->getKernel();
+        if (!isset($GLOBALS['kernel'])) {
+            $message = 'You can not install the EC-CUBE plugin via `composer` command.'.PHP_EOL
+                .'Please use the `bin/console eccube:composer:require '.$package->getName().'` instead.';
+            throw new \RuntimeException($message);
+        }
+
+        $kernel = $GLOBALS['kernel'];
 
         parent::install($repo, $package);
 
@@ -44,7 +50,13 @@ class PluginInstaller extends LibraryInstaller
 
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
-        $kernel = $this->getKernel();
+        if (!isset($GLOBALS['kernel'])) {
+            $message = 'You can not uninstall the EC-CUBE plugin via `composer` command.'.PHP_EOL
+                .'Please use the `bin/console eccube:composer:remove '.$package->getName().'` instead.';
+            throw new \RuntimeException($message);
+        }
+
+        $kernel = $GLOBALS['kernel'];
         $container = $kernel->getContainer();
 
         $extra = $package->getExtra();
@@ -82,13 +94,4 @@ class PluginInstaller extends LibraryInstaller
 
         parent::uninstall($repo, $package);
     }
-
-    private function getKernel()
-    {
-        if (!isset($GLOBALS['kernel'])) {
-            throw new \RuntimeException('Use `bin/console eccube:composer`');
-        }
-        return $GLOBALS['kernel'];
-    }
-
 }
