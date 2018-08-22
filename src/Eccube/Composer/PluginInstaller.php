@@ -38,14 +38,10 @@ class PluginInstaller extends LibraryInstaller
         $container = $kernel->getContainer();
         $eccubeConfig = $container->get('Eccube\Common\EccubeConfig');
         $code = $extra['code'];
-        // TODO config.ymlをやめてcomposer.jsonから読む
-        $configYml = Yaml::parse(file_get_contents($eccubeConfig['plugin_realdir'].'/'.$code.'/config.yml'));
-        // TODO event.ymlをなくす
-        $eventYml = [];
-
         $pluginService = $container->get('Eccube\Service\PluginService');
+        $config = $pluginService->readConfig($eccubeConfig['plugin_realdir'].DIRECTORY_SEPARATOR.$code);
         $pluginService->preInstall();
-        $pluginService->postInstall($configYml, $eventYml, @$extra['id']);
+        $pluginService->postInstall($config, @$extra['id']);
     }
 
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
