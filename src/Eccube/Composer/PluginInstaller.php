@@ -7,9 +7,8 @@ namespace Eccube\Composer;
 use Composer\Installer\LibraryInstaller;
 use Composer\Package\PackageInterface;
 use Composer\Repository\InstalledRepositoryInterface;
-use Symfony\Component\Console\Exception\RuntimeException;
-use Symfony\Component\Yaml\Yaml;
 use Eccube\Common\Constant;
+use Eccube\Service\PluginService;
 
 class PluginInstaller extends LibraryInstaller
 {
@@ -22,26 +21,43 @@ class PluginInstaller extends LibraryInstaller
         return "app/Plugin/".$extra['code'];
     }
 
+    public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target)
+    {
+        parent::update($repo, $initial, $target);
+        $this->addPluginIdToComposerJson($target);
+    }
+
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         if (!isset($GLOBALS['kernel'])) {
-            $message = 'You can not install the EC-CUBE plugin via `composer` command.'.PHP_EOL
-                .'Please use the `bin/console eccube:composer:require '.$package->getName().'` instead.';
+            $message = 'You can not uninstall the EC-CUBE plugin via `composer` command.'.PHP_EOL
+                .'Please use the `bin/console eccube:composer:remove '.$package->getName().'` instead.';
             throw new \RuntimeException($message);
         }
 
         $kernel = $GLOBALS['kernel'];
+        $container = $kernel->getContainer();
 
         parent::install($repo, $package);
 
+        $this->addPluginIdToComposerJson($package);
+
+        /** @var PluginService $pluginService */
+        $pluginService = $container->get(PluginService::class);
+        $config = $pluginService->readConfig($this->getInstallPath($package));
+        $Plugin = $pluginService->registerPlugin($config, $config['source']);
+    }
+
+    private function addPluginIdToComposerJson(PackageInterface $package)
+    {
         $extra = $package->getExtra();
-        $container = $kernel->getContainer();
-        $eccubeConfig = $container->get('Eccube\Common\EccubeConfig');
-        $code = $extra['code'];
-        $pluginService = $container->get('Eccube\Service\PluginService');
-        $config = $pluginService->readConfig($eccubeConfig['plugin_realdir'].DIRECTORY_SEPARATOR.$code);
-        $pluginService->preInstall();
-        $pluginService->postInstall($config, @$extra['id']);
+        $id = @$extra['id'];
+        $composerPath = $this->getInstallPath($package).DIRECTORY_SEPARATOR.'composer.json';
+        if (file_exists($composerPath)) {
+            $composerJson = json_decode(file_get_contents($composerPath), true);
+            $composerJson['extra']['id'] = $id;
+            file_put_contents($composerPath, json_encode($composerJson));
+        }
     }
 
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
@@ -81,7 +97,7 @@ class PluginInstaller extends LibraryInstaller
         if ($id) {
             $Plugin = $pluginRepository->findOneBy(['source' => $id]);
             if ($Plugin->isEnabled()) {
-                throw new RuntimeException('プラグインを無効化してください。'.$code);
+                throw new \RuntimeException('プラグインを無効化してください。'.$code);
             }
             if ($Plugin) {
                 $pluginService->uninstall($Plugin);
