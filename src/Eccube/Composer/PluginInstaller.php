@@ -5,9 +5,11 @@ namespace Eccube\Composer;
 
 
 use Composer\Installer\LibraryInstaller;
+use Composer\Json\JsonManipulator;
 use Composer\Package\PackageInterface;
 use Composer\Repository\InstalledRepositoryInterface;
 use Eccube\Common\Constant;
+use Eccube\Kernel;
 use Eccube\Service\PluginService;
 
 class PluginInstaller extends LibraryInstaller
@@ -35,17 +37,33 @@ class PluginInstaller extends LibraryInstaller
             throw new \RuntimeException($message);
         }
 
-        $kernel = $GLOBALS['kernel'];
-        $container = $kernel->getContainer();
+        try {
 
-        parent::install($repo, $package);
+            /** @var Kernel $kernel */
+            $kernel = $GLOBALS['kernel'];
+            $container = $kernel->getContainer();
 
-        $this->addPluginIdToComposerJson($package);
+            parent::install($repo, $package);
 
-        /** @var PluginService $pluginService */
-        $pluginService = $container->get(PluginService::class);
-        $config = $pluginService->readConfig($this->getInstallPath($package));
-        $Plugin = $pluginService->registerPlugin($config, $config['source']);
+            $this->addPluginIdToComposerJson($package);
+
+            /** @var PluginService $pluginService */
+            $pluginService = $container->get(PluginService::class);
+            $config = $pluginService->readConfig($this->getInstallPath($package));
+            $Plugin = $pluginService->registerPlugin($config, $config['source']);
+
+        } catch (\Exception $e) {
+
+            // 更新されたcomposer.jsonを戻す
+            parent::uninstall($repo, $package);
+            $fileName = $kernel->getProjectDir().DIRECTORY_SEPARATOR.'composer.json';
+            $contents = file_get_contents($fileName);
+            $json = new JsonManipulator($contents);
+            $json->removeSubNode('require', $package->getPrettyName());
+            file_put_contents($fileName, $json->getContents());
+
+            throw $e;
+        }
     }
 
     private function addPluginIdToComposerJson(PackageInterface $package)
