@@ -37,11 +37,32 @@ class PluginInstaller extends LibraryInstaller
             throw new \RuntimeException($message);
         }
 
-        try {
+        /** @var Kernel $kernel */
+        $kernel = $GLOBALS['kernel'];
+        $container = $kernel->getContainer();
 
-            /** @var Kernel $kernel */
-            $kernel = $GLOBALS['kernel'];
-            $container = $kernel->getContainer();
+        $extra = $package->getExtra();
+        $source = $extra['id'];
+        $code = $extra['code'];
+        $version = $package->getPrettyVersion();
+
+        $pluginRepository = $container->get('Eccube\Repository\PluginRepository');
+        $Plugin = $pluginRepository->findOneBy([
+            'source' => $source,
+            'code' => $code,
+            'version' => $version
+        ]);
+
+        // レコードがある場合はcomposer.jsonの更新のみ行う.
+        if ($Plugin) {
+            parent::install($repo, $package);
+
+            $this->addPluginIdToComposerJson($package);
+
+            return;
+        }
+
+        try {
 
             parent::install($repo, $package);
 
@@ -114,7 +135,7 @@ class PluginInstaller extends LibraryInstaller
         $id = @$extra['id'];
         if ($id) {
             $Plugin = $pluginRepository->findOneBy(['source' => $id]);
-            if ($Plugin->isEnabled()) {
+            if ($Plugin && $Plugin->isEnabled()) {
                 throw new \RuntimeException('プラグインを無効化してください。'.$code);
             }
             if ($Plugin) {
