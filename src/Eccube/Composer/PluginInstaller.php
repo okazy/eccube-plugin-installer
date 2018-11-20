@@ -44,7 +44,7 @@ class PluginInstaller extends LibraryInstaller
         $extra = $package->getExtra();
         $source = $extra['id'];
         $code = $extra['code'];
-        $version = $package->getVersion();
+        $version = $package->getPrettyVersion();
 
         $pluginRepository = $container->get('Eccube\Repository\PluginRepository');
         $Plugin = $pluginRepository->findOneBy([
