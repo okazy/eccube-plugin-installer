@@ -124,7 +124,7 @@ class PluginInstaller extends LibraryInstaller
                 $jsonText = @file_get_contents($dir.'/composer.json');
                 if ($jsonText) {
                     $json = json_decode($jsonText, true);
-                    if (array_key_exists('ec-cube/'.$code, $json['require'])) {
+                    if (array_key_exists('require', $json) && array_key_exists('ec-cube/'.$code, $json['require'])) {
                         throw new \RuntimeException('このプラグインに依存しているプラグインがあるため削除できません。'.$p->getCode());
                     }
                 }
