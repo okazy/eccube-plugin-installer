@@ -1,6 +1,6 @@
 {
   "name": "ec-cube/plugin-installer",
-  "version": "0.0.8",
+  "version": "2.0.x-dev",
   "type": "composer-plugin",
   "description": "EC-CUBE plugin installer.",
   "license": "MIT",
@@ -13,6 +13,6 @@
     "class": "Eccube\\Composer\\EccubePluginInstallerPlugin"
   },
   "require": {
-    "composer-plugin-api": "^1.0"
+    "composer-plugin-api": "^1.0 || ^2.0"
   }
 }
