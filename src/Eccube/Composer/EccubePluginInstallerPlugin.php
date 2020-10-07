@@ -17,4 +17,12 @@ class EccubePluginInstallerPlugin implements PluginInterface
         $installer = new PluginInstaller($io, $composer, self::TYPE);
         $composer->getInstallationManager()->addInstaller($installer);
     }
+    public function deactivate(Composer $composer, IOInterface $io)
+    {
+        $installer = new PluginInstaller($io, $composer, self::TYPE);
+        $composer->getInstallationManager()->addInstaller($installer);
+    }
+    public function uninstall(Composer $composer, IOInterface $io)
+    {
+    }
 }
