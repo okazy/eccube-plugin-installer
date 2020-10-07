@@ -10,7 +10,11 @@
     }
   },
   "extra": {
-    "class": "Eccube\\Composer\\EccubePluginInstallerPlugin"
+      "class": "Eccube\\Composer\\EccubePluginInstallerPlugin",
+      "branch-alias": {
+          "dev-master": "2.0-dev"
+      }
+    }
   },
   "require": {
     "composer-plugin-api": "^1.0 || ^2.0"
