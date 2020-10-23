@@ -32,9 +32,8 @@ class PluginInstaller extends LibraryInstaller
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         if (!isset($GLOBALS['kernel'])) {
-            $message = 'You can not install the EC-CUBE plugin via `composer` command.'.PHP_EOL
-                .'Please use the `bin/console eccube:composer:require '.$package->getName().'` instead.';
-            throw new \RuntimeException($message);
+            parent::install($repo, $package);
+            return;
         }
 
         /** @var Kernel $kernel */
