@@ -1,6 +1,6 @@
 {
   "name": "ec-cube/plugin-installer",
-  "version": "2.0.x-dev",
+  "version": "2.0.0",
   "type": "composer-plugin",
   "description": "EC-CUBE plugin installer.",
   "license": "MIT",
