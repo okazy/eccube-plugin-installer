@@ -14,6 +14,9 @@ use Eccube\Service\PluginService;
 
 class PluginInstaller extends LibraryInstaller
 {
+    /**
+     * {@inheritDoc}
+     */
     public function getInstallPath(PackageInterface $package)
     {
         $extra = $package->getExtra();
@@ -23,12 +26,20 @@ class PluginInstaller extends LibraryInstaller
         return "app/Plugin/".$extra['code'];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target)
     {
-        parent::update($repo, $initial, $target);
+        $Promise = parent::update($repo, $initial, $target);
         $this->addPluginIdToComposerJson($target);
+
+        return $Promise;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         if (!isset($GLOBALS['kernel'])) {
@@ -55,16 +66,16 @@ class PluginInstaller extends LibraryInstaller
 
         // レコードがある場合はcomposer.jsonの更新のみ行う.
         if ($Plugin) {
-            parent::install($repo, $package);
+            $Promise = parent::install($repo, $package);
 
             $this->addPluginIdToComposerJson($package);
 
-            return;
+            return $Promise;
         }
 
         try {
 
-            parent::install($repo, $package);
+            $Promise = parent::install($repo, $package);
 
             $this->addPluginIdToComposerJson($package);
 
@@ -73,6 +84,7 @@ class PluginInstaller extends LibraryInstaller
             $config = $pluginService->readConfig($this->getInstallPath($package));
             $Plugin = $pluginService->registerPlugin($config, $config['source']);
 
+            return $Promise;
         } catch (\Exception $e) {
 
             // 更新されたcomposer.jsonを戻す
@@ -99,6 +111,9 @@ class PluginInstaller extends LibraryInstaller
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         if (!isset($GLOBALS['kernel'])) {
@@ -124,7 +139,9 @@ class PluginInstaller extends LibraryInstaller
                 $jsonText = @file_get_contents($dir.'/composer.json');
                 if ($jsonText) {
                     $json = json_decode($jsonText, true);
-                    if (array_key_exists('require', $json) && array_key_exists('ec-cube/'.$code, $json['require'])) {
+                    if (array_key_exists('require', $json)
+                        // see https://www.php.net/manual/ja/function.array-key-exists.php#92717
+                        && (in_array(strtolower('ec-cube/'.$code), array_map('strtolower', array_keys($json['require']))))) {
                         throw new \RuntimeException('このプラグインに依存しているプラグインがあるため削除できません。'.$p->getCode());
                     }
                 }
@@ -143,6 +160,6 @@ class PluginInstaller extends LibraryInstaller
             }
         }
 
-        parent::uninstall($repo, $package);
+        return parent::uninstall($repo, $package);
     }
 }
